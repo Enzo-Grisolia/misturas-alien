@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Mistura de Combustível</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;400&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url('images/Alien.png');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 320px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: rgba(249, 249, 249, 0.9);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        input, button, select {
+            width: 80%;
+            margin: 10px 0;
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #000;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        .resultado {
+            background-color: black;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            white-space: pre-line;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calculadora de Mistura Alien Engine Tuning</h2>
+        <label for="tipo">Tipo de Mistura:</label>
+        <select id="tipo">
+            <option value="E40">E40</option>
+            <option value="E50">E50</option>
+            <option value="E63">E63</option>
+            <option value="E70">E70</option>
+            <option value="E75">E75</option>
+            <option value="E80">E80</option>
+            <option value="E85">E85</option>
+        </select>
+        
+        <label for="quantidade1">Quantidade de litros a abastecer (L):</label>
+        <input type="number" id="quantidade1" min="0" step="0.1">
+
+        <label for="tipoGasolina">Gasolina:</label>
+        <select id="tipoGasolina">
+            <option value="Podium">Podium</option>
+            <option value="Comum">Comum</option>
+        </select>
+        
+        <button onclick="calcularMistura()">Calcular</button>
+        <div id="resultado" class="resultado" style="display: none;"></div>
+    </div>
+
+    <script>
+        function calcularMistura() {
+            let tipo = document.getElementById("tipo").value;
+            let quantidadeTotal = parseFloat(document.getElementById("quantidade1").value) || 0;
+            let tipoGasolina = document.getElementById("tipoGasolina").value;
+
+            let percentualEtanolNaGasolina = tipoGasolina === "Podium" ? 0.25 : 0.275;
+
+            let proporcoes = {
+                E40: 0.4,
+                E50: 0.5,
+                E63: 0.63,
+                E70: 0.7,
+                E75: 0.75,
+                E80: 0.8,
+                E85: 0.85
+            };
+
+            let percentualEtanolDesejado = proporcoes[tipo];
+
+            // Calcular a quantidade de gasolina e etanol
+            let gasolinaNecessaria = (quantidadeTotal * (1 - percentualEtanolDesejado)) / (1 - percentualEtanolNaGasolina);
+            let etanolNecessario = quantidadeTotal - gasolinaNecessaria;
+
+            // Arredondar para o inteiro mais próximo
+            gasolinaNecessaria = Math.round(gasolinaNecessaria);
+            etanolNecessario = Math.round(etanolNecessario);
+
+            // Ajustar se a soma não for igual à quantidade total
+            let totalCalculado = gasolinaNecessaria + etanolNecessario;
+            if (totalCalculado < quantidadeTotal) {
+                if (gasolinaNecessaria > etanolNecessario) {
+                    gasolinaNecessaria++;
+                } else {
+                    etanolNecessario++;
+                }
+            }
+
+            let resultadoDiv = document.getElementById("resultado");
+            resultadoDiv.innerText = `Para ${quantidadeTotal}L de ${tipo}, use:\n${gasolinaNecessaria}L de GASOLINA ${tipoGasolina.toUpperCase()}\n${etanolNecessario}L de ETANOL`;
+            resultadoDiv.style.display = "block";
+        }
+    </script>
+</body>
+<footer class="footer">
+    <p>© 2025 Alien Engine Tuning - Todos os direitos reservados</p>
+</footer>
+</html>
