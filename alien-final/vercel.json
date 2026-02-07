@@ -1,6 +1,5 @@
 {
-  "buildCommand": "npm install && npm run build",
+  "buildCommand": "pnpm run build",
   "outputDirectory": "dist/public",
-  "framework": "vite",
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "pnpm install --frozen-lockfile"
 }
