@@ -1,71 +1,68 @@
 /**
- * Alien Motorsport - Calculadora de Combustível 2026
- * Script para cálculo de mistura de combustível E40-E85
- * Versão com arredondamento para números inteiros
+ * Alien Motorsport - Calculadora de Mistura de Combustível
+ * Calcula a proporção de gasolina + etanol para atingir uma mistura E40-E85
  */
+
+const CHAVE_STORAGE = "alien-calc-ultima-mistura";
+
+const PERCENTUAL_ETANOL_NA_GASOLINA = {
+  Premium: 0.25,
+  Comum: 0.32,
+};
+
+const PROPORCOES_MISTURA = {
+  E40: 0.40,
+  E50: 0.50,
+  E63: 0.63,
+  E70: 0.70,
+  E75: 0.75,
+  E80: 0.80,
+  E85: 0.85,
+};
 
 /**
  * Calcula a mistura de combustível baseado nos parâmetros selecionados
  */
 function calcularMistura() {
-  // Obter valores dos inputs
   const tipo = document.getElementById("tipo").value;
   const quantidadeTotal = parseFloat(document.getElementById("quantidade1").value) || 0;
   const tipoGasolina = document.getElementById("tipoGasolina").value;
 
-  // Validar entrada
+  esconderErro();
+
   if (quantidadeTotal <= 0) {
-    alert("⚠️ Por favor, insira uma quantidade válida de litros");
+    mostrarErro("Insira uma quantidade válida de litros.");
     document.getElementById("quantidade1").focus();
     return;
   }
 
   if (quantidadeTotal > 10000) {
-    alert("⚠️ Quantidade muito alta. Máximo: 10.000 litros");
+    mostrarErro("Quantidade muito alta. Máximo de 10.000 litros.");
     return;
   }
 
-  // Percentual de etanol na gasolina (Premium 25%, Comum 30%)
-  const percentualEtanolNaGasolina = tipoGasolina === "Premium" ? 0.25 : 0.30;
+  const percentualEtanolNaGasolina = PERCENTUAL_ETANOL_NA_GASOLINA[tipoGasolina];
+  const percentualEtanolDesejado = PROPORCOES_MISTURA[tipo];
 
-  // Proporções de etanol para cada tipo de mistura
-  const proporcoes = {
-    E40: 0.40,
-    E50: 0.50,
-    E63: 0.63,
-    E70: 0.70,
-    E75: 0.75,
-    E80: 0.80,
-    E85: 0.85,
-  };
-
-  const percentualEtanolDesejado = proporcoes[tipo];
-
-  // Fórmula de cálculo:
-  // Gasolina necessária = (Total × (1 - %Etanol desejado)) / (1 - %Etanol na gasolina)
+  // Gasolina necessária = (Total x (1 - %Etanol desejado)) / (1 - %Etanol na gasolina)
   // Etanol necessário = Total - Gasolina necessária
-  
   let gasolinaNecessaria =
     (quantidadeTotal * (1 - percentualEtanolDesejado)) /
     (1 - percentualEtanolNaGasolina);
   let etanolNecessario = quantidadeTotal - gasolinaNecessaria;
 
-  // Arredondar para o número inteiro mais próximo
   gasolinaNecessaria = Math.round(gasolinaNecessaria);
   etanolNecessario = Math.round(etanolNecessario);
 
-  // Ajustar se a soma não for igual à quantidade total (compensar arredondamento)
-  let totalCalculado = gasolinaNecessaria + etanolNecessario;
-  
+  // Compensa o arredondamento para que a soma bata com o total informado
+  const totalCalculado = gasolinaNecessaria + etanolNecessario;
   if (totalCalculado < quantidadeTotal) {
-    // Se faltou, adiciona ao que for maior
     if (gasolinaNecessaria >= etanolNecessario) {
       gasolinaNecessaria++;
     } else {
       etanolNecessario++;
     }
   } else if (totalCalculado > quantidadeTotal) {
-    // Se sobrou, remove do que for maior
     if (gasolinaNecessaria >= etanolNecessario) {
       gasolinaNecessaria--;
     } else {
@@ -73,66 +70,90 @@ function calcularMistura() {
     }
   }
 
-  // Atualizar a exibição do resultado
-  exibirResultado(gasolinaNecessaria, etanolNecessario, quantidadeTotal, tipoGasolina);
+  exibirResultado(gasolinaNecessaria, etanolNecessario, quantidadeTotal, tipoGasolina, tipo);
+  salvarUltimaMistura(tipo, quantidadeTotal, tipoGasolina);
 }
 
-/**
- * Exibe o resultado do cálculo na interface com animação
- * @param {number} gasolina - Quantidade de gasolina em litros
- * @param {number} etanol - Quantidade de etanol em litros
- * @param {number} total - Quantidade total em litros
- * @param {string} tipoGasolina - Tipo de gasolina (Premium ou Comum)
- */
-function exibirResultado(gasolina, etanol, total, tipoGasolina) {
+function exibirResultado(gasolina, etanol, total, tipoGasolina, tipo) {
   const resultadoDiv = document.getElementById("resultado");
-  
-  // Atualizar label com tipo de gasolina
-  const gasolinaLabel = document.getElementById("resultado-gasolina-label");
-  gasolinaLabel.innerText = "Gasolina " + tipoGasolina + ":";
-  
-  // Atualizar valores com números inteiros
-  document.getElementById("resultado-gasolina").innerText = 
-    Math.round(gasolina) + "L";
-  document.getElementById("resultado-etanol").innerText = 
-    Math.round(etanol) + "L";
-  document.getElementById("resultado-total").innerText = 
-    Math.round(total) + "L";
-  
-  // Mostrar resultado com animação
+
+  document.getElementById("resultado-gasolina-label").innerText = "Gasolina " + tipoGasolina;
+  document.getElementById("resultado-gasolina").innerText = gasolina + " L";
+  document.getElementById("resultado-etanol").innerText = etanol + " L";
+  document.getElementById("resultado-total").innerText = total + " L";
+  document.getElementById("resultado-mistura-tag").innerText = tipo;
+
+  const pctGasolina = total > 0 ? (gasolina / total) * 100 : 0;
+  const pctEtanol = 100 - pctGasolina;
+  const barraGasolina = document.getElementById("barra-gasolina");
+  const barraEtanol = document.getElementById("barra-etanol");
+  barraGasolina.style.width = pctGasolina + "%";
+  barraEtanol.style.width = pctEtanol + "%";
+  document.getElementById("barra-gasolina-pct").innerText = gasolina + " L";
+  document.getElementById("barra-etanol-pct").innerText = etanol + " L";
+
   resultadoDiv.classList.remove("show");
-  
-  // Forçar reflow para reiniciar animação
   void resultadoDiv.offsetWidth;
-  
   resultadoDiv.classList.add("show");
 }
 
-/**
- * Inicializar event listeners
- */
-document.addEventListener("DOMContentLoaded", function() {
-  // Permitir calcular ao pressionar Enter no input de quantidade
-  document.getElementById("quantidade1").addEventListener("keypress", function(event) {
+function mostrarErro(mensagem) {
+  const erroDiv = document.getElementById("erro");
+  erroDiv.innerText = mensagem;
+  erroDiv.classList.add("show");
+}
+
+function esconderErro() {
+  const erroDiv = document.getElementById("erro");
+  erroDiv.classList.remove("show");
+  erroDiv.innerText = "";
+}
+
+function salvarUltimaMistura(tipo, quantidade, tipoGasolina) {
+  try {
+    localStorage.setItem(
+      CHAVE_STORAGE,
+      JSON.stringify({ tipo, quantidade, tipoGasolina })
+    );
+  } catch (erro) {
+    // Armazenamento indisponível (modo privado, etc.) - segue sem persistir
+  }
+}
+
+function carregarUltimaMistura() {
+  try {
+    const dados = JSON.parse(localStorage.getItem(CHAVE_STORAGE));
+    if (!dados) return;
+    if (dados.tipo) document.getElementById("tipo").value = dados.tipo;
+    if (dados.tipoGasolina) document.getElementById("tipoGasolina").value = dados.tipoGasolina;
+    if (dados.quantidade) document.getElementById("quantidade1").value = dados.quantidade;
+  } catch (erro) {
+    // Ignora dados corrompidos
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  carregarUltimaMistura();
+
+  document.getElementById("quantidade1").addEventListener("keypress", function (event) {
     if (event.key === "Enter") {
       calcularMistura();
     }
   });
 
-  // Permitir calcular ao mudar o tipo de mistura
-  document.getElementById("tipo").addEventListener("change", function() {
+  document.getElementById("tipo").addEventListener("change", function () {
     if (document.getElementById("quantidade1").value) {
       calcularMistura();
     }
   });
 
-  // Permitir calcular ao mudar o tipo de gasolina
-  document.getElementById("tipoGasolina").addEventListener("change", function() {
+  document.getElementById("tipoGasolina").addEventListener("change", function () {
     if (document.getElementById("quantidade1").value) {
       calcularMistura();
     }
   });
 
-  // Focar no input de quantidade ao carregar
   document.getElementById("quantidade1").focus();
+
+  document.getElementById("ano-atual").innerText = new Date().getFullYear();
 });
