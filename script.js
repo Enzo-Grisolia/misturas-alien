@@ -5,6 +5,7 @@
 
 const CHAVE_STORAGE = "alien-calc-ultima-mistura";
 
+
 const PERCENTUAL_ETANOL_NA_GASOLINA = {
   Premium: 0.25,
   Comum: 0.32,
